@@ -62,8 +62,9 @@ void REPL(){
             Value val = expr -> eval(global_env);
             if (val -> v_type == V_TERMINATE)
                 break;
-            // A void result is echoed only for an explicit (void) call
-            if (val -> v_type != V_VOID || isExplicitVoidCall(expr))
+            // Commands such as define, set!, display, (begin) print nothing; void values print #<void>
+            bool silent = val -> v_type == V_VOID && static_cast<Void*>(val.get()) -> silent;
+            if (!silent || isExplicitVoidCall(expr))
                 val -> show(std :: cout); // value print
         }
         catch (const RuntimeError &RE){

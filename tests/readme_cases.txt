@@ -36,6 +36,11 @@
 (> 4 1 -1)	#t
 (<= 1 1 1)	#t
 (>= 2 1 1)	#t
+(< 1)	RuntimeError
+(<)	RuntimeError
+(< 2 1 (quote a))	#f
+(number? (/ 4 2))	#t
+(number? (+ 1/2 1/2))	#f
 (< 1 3 2)	#f
 (< 1/2 2/3)	#t
 (cons (quote a) (cons 3 "hello"))	(a 3 . "hello")
@@ -90,7 +95,7 @@
 (if #f (/ 1 0) 'false-branch)	false-branch
 (cond (else 1) (#t 2))	1
 (cond (#t))	#t
-(cond (#f 1))	
+(cond (#f 1))	#<void>
 (cond ((= 1 2) 'a) ((= 1 1) 'b 'c) (else 'd))	c
 (begin 1)	1
 (begin (void) (cons 1 2) #t)	#t
@@ -168,7 +173,7 @@ tree	((100 2) (3 4 5) (6 7 8 9))
 (define + 1)	RuntimeError
 (define 1x 2)	RuntimeError
 4/2	2
-(number? 4/2)	#t
+(number? 4/2)	#f
 (number? 1/2)	#f
 (modulo 7 3)	1
 (expt 2 10)	1024

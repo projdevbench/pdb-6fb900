@@ -133,8 +133,12 @@ bool cmpHolds(int c, CmpOp op) {
     return false;
 }
 
-// Checks adjacent pairs left to right, stopping at the first one that fails.
+// Comparisons take two or more arguments; adjacent pairs are checked left to
+// right, stopping at the first one that fails.
 Value compareChain(const std::vector<Value> &args, CmpOp op) {
+    if (args.size() < 2) {
+        throw RuntimeError("Comparison expects at least two arguments");
+    }
     for (size_t i = 0; i + 1 < args.size(); i++) {
         if (!cmpHolds(compareNumericValues(args[i], args[i + 1]), op)) {
             return BooleanV(false);
@@ -279,7 +283,7 @@ Value run(ExprBase *cur, Assoc env) {
                     next = clause.back().get();
                     break;
                 }
-                if (next == nullptr) return SilentVoidV();
+                if (next == nullptr) return VoidV(); // no matching branch: a (printed) void value
                 cur = next;
                 continue;
             }
