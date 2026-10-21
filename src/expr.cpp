@@ -147,7 +147,7 @@ IsString::IsString(const Expr &r1) : Unary(E_STRINGQ, r1) {}
 
 //CONTROL FLOW CONSTRUCTS
 
-Begin::Begin(const vector<Expr> &vec) : ExprBase(E_BEGIN), es(vec) {}
+Begin::Begin(const vector<Expr> &vec, const vector<string> &defs) : ExprBase(E_BEGIN), es(vec), defs(defs) {}
 
 Quote::Quote(const Syntax &t) : ExprBase(E_QUOTE), s(t) {}
 

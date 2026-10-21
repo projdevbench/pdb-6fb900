@@ -68,10 +68,15 @@ struct AssocList {
 };
 
 // Environment operations
+// Local scopes are chained AssocList nodes; the end of every chain (nullptr)
+// is the global scope, stored in a hash table so that closures always observe
+// later top-level definitions (e.g. mutually recursive global functions).
 Assoc empty();
 Assoc extend(const std::string&, const Value &, Assoc &);
 void modify(const std::string&, const Value &, Assoc &);
 Value find(const std::string &, Assoc &);
+Value *lookup(const std::string &, const Assoc &); // binding slot, nullptr if unbound
+void defineGlobal(const std::string &, const Value &);
 
 // ============================================================================
 // Simple Value Types
@@ -81,10 +86,12 @@ Value find(const std::string &, Assoc &);
  * @brief Void value (represents no meaningful return value)
  */
 struct Void : ValueBase {
-    Void();
+    bool silent; ///< result of a side-effecting command (define, set!, display, ...), not echoed by the REPL
+    Void(bool = false);
     virtual void show(std::ostream &) override;
 };
 Value VoidV();
+Value SilentVoidV();
 
 /**
  * @brief Integer value
@@ -183,10 +190,11 @@ struct Procedure : ValueBase {
     std::vector<std::string> parameters;   ///< Parameter names
     Expr e;                                ///< Function body expression
     Assoc env;                             ///< Closure environment
-    Procedure(const std::vector<std::string> &, const Expr &, const Assoc &);
+    bool is_primitive;                     ///< Built-in procedure used as a value
+    Procedure(const std::vector<std::string> &, const Expr &, const Assoc &, bool = false);
     virtual void show(std::ostream &) override;
 };
-Value ProcedureV(const std::vector<std::string> &, const Expr &, const Assoc &);
+Value ProcedureV(const std::vector<std::string> &, const Expr &, const Assoc &, bool = false);
 
 // ============================================================================
 // Utility Functions

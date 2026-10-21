@@ -344,7 +344,8 @@ struct IsString : Unary {
 
 struct Begin : ExprBase {
     std::vector<Expr> es;
-    Begin(const std::vector<Expr> &);
+    std::vector<std::string> defs; ///< internal definitions bound on entry (body scope)
+    Begin(const std::vector<Expr> &, const std::vector<std::string> & = {});
     virtual Value eval(Assoc &) override;
 };
 

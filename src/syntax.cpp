@@ -73,8 +73,8 @@ bool tryParseNumber(const std::string &s, int &result) {
   int n = 0;
   int i = 0;
   
-  // Single '+' or '-' are not numbers
-  if (s.size() == 1 && (s[0] == '+' || s[0] == '-'))
+  // Empty token, single '+' or '-' are not numbers
+  if (s.empty() || (s.size() == 1 && (s[0] == '+' || s[0] == '-')))
     return false;
   
   // Handle sign
@@ -189,6 +189,10 @@ Syntax readItem(std::istream &is) {
     is.get();
     s.push_back(c);
   } while (true);
+  // A stray closing bracket would otherwise never be consumed
+  if (s.empty() && (is.peek() == ')' || is.peek() == ']')) {
+    is.get();
+  }
   
   // Try parsing as rational first
   int numerator, denominator;
@@ -208,9 +212,9 @@ Syntax readItem(std::istream &is) {
 
 Syntax readList(std::istream &is) {
     List *stx = new List();
-    while (readSpace(is).peek() != ')' && readSpace(is).peek() != ')')
+    while (readSpace(is).peek() != ')' && is.peek() != ']' && is.peek() != EOF)
         stx->stxs.push_back(readItem(is));
-    is.get(); // ')'
+    is.get(); // ')' or ']'
     return Syntax(stx);
 }
 

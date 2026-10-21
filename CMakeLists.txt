@@ -24,11 +24,15 @@ add_executable(code ${SOURCES})
 
 # Set C++ standard
 set_target_properties(code PROPERTIES
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
 
 target_compile_options(code
   PRIVATE
-    -g
+    -O2
 )
+
+# The interpreter runs on a thread with an enlarged stack
+find_package(Threads REQUIRED)
+target_link_libraries(code PRIVATE Threads::Threads)

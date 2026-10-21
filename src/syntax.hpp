@@ -70,6 +70,7 @@ struct List : SyntaxBase {
 };
 
 Syntax readSyntax(std::istream &);
+std::istream &readSpace(std::istream &);
 
 std::istream &operator>>(std::istream &, Syntax);
 #endif

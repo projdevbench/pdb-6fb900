@@ -1,0 +1,14 @@
+# CMake artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+build/
+
+# Build output
+/code
+
+# Local scoring artifacts
+score/scm.out
+score/diff_output.txt

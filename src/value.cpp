@@ -7,6 +7,8 @@
  */
 
 #include "value.hpp"
+#include "RE.hpp"
+#include <unordered_map>
 
 // ============================================================================
 // Base ValueBase Implementation
@@ -71,22 +73,40 @@ Assoc extend(const std::string &x, const Value &v, Assoc &lst) {
     return Assoc(new AssocList(x, v, lst));
 }
 
-void modify(const std::string &x, const Value &v, Assoc &lst) {
-    for (auto i = lst; i.get() != nullptr; i = i->next) {
+static std::unordered_map<std::string, Value> &globalTable() {
+    static std::unordered_map<std::string, Value> table;
+    return table;
+}
+
+Value *lookup(const std::string &x, const Assoc &l) {
+    for (AssocList *i = l.get(); i != nullptr; i = i->next.get()) {
         if (x == i->x) {
-            i->v = v;
-            return;
+            return &i->v;
         }
+    }
+    auto it = globalTable().find(x);
+    return it == globalTable().end() ? nullptr : &it->second;
+}
+
+void defineGlobal(const std::string &x, const Value &v) {
+    auto it = globalTable().find(x);
+    if (it == globalTable().end()) {
+        globalTable().emplace(x, v);
+    } else {
+        it->second = v;
+    }
+}
+
+void modify(const std::string &x, const Value &v, Assoc &lst) {
+    Value *slot = lookup(x, lst);
+    if (slot != nullptr) {
+        *slot = v;
     }
 }
 
 Value find(const std::string &x, Assoc &l) {
-    for (auto i = l; i.get() != nullptr; i = i->next) {
-        if (x == i->x) {
-            return i->v;
-        }
-    }
-    return Value(nullptr);
+    Value *slot = lookup(x, l);
+    return slot == nullptr ? Value(nullptr) : *slot;
 }
 
 // ============================================================================
@@ -94,7 +114,7 @@ Value find(const std::string &x, Assoc &l) {
 // ============================================================================
 
 // Void
-Void::Void() : ValueBase(V_VOID) {}
+Void::Void(bool silent) : ValueBase(V_VOID), silent(silent) {}
 
 void Void::show(std::ostream &os) {
     os << "#<void>";
@@ -102,6 +122,10 @@ void Void::show(std::ostream &os) {
 
 Value VoidV() {
     return Value(new Void());
+}
+
+Value SilentVoidV() {
+    return Value(new Void(true));
 }
 
 // Integer
@@ -130,7 +154,7 @@ static int gcd(int a, int b) {
 
 Rational::Rational(int num, int den) : ValueBase(V_RATIONAL) {
     if (den == 0) {
-        throw std::runtime_error("Division by zero");
+        throw RuntimeError("Division by zero");
     }
     
     // Simplify the fraction
@@ -243,15 +267,15 @@ Value PairV(const Value &car, const Value &cdr) {
 }
 
 // Procedure
-Procedure::Procedure(const std::vector<std::string> &xs, const Expr &e, const Assoc &env)
-    : ValueBase(V_PROC), parameters(xs), e(e), env(env) {}
+Procedure::Procedure(const std::vector<std::string> &xs, const Expr &e, const Assoc &env, bool prim)
+    : ValueBase(V_PROC), parameters(xs), e(e), env(env), is_primitive(prim) {}
 
 void Procedure::show(std::ostream &os) {
     os << "#<procedure>";
 }
 
-Value ProcedureV(const std::vector<std::string> &xs, const Expr &e, const Assoc &env) {
-    return Value(new Procedure(xs, e, env));
+Value ProcedureV(const std::vector<std::string> &xs, const Expr &e, const Assoc &env, bool prim) {
+    return Value(new Procedure(xs, e, env, prim));
 }
 
 // ============================================================================
