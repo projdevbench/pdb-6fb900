@@ -52,8 +52,10 @@ long long gcdll(long long a, long long b) {
     return a;
 }
 
-// Builds a normalized number: an Integer when the denominator divides the numerator.
-Value makeNumber(long long num, long long den) {
+// Builds a reduced rational. Results involving a rational operand stay Rational
+// even when integral (shown as an integer, but `number?` is #f), matching the
+// framework's RationalNum::eval; integer division yields an Integer when exact.
+Value makeNumber(long long num, long long den, bool keepRational = true) {
     if (den == 0) {
         throw RuntimeError("Division by zero");
     }
@@ -66,7 +68,7 @@ Value makeNumber(long long num, long long den) {
         num /= g;
         den /= g;
     }
-    if (den == 1) {
+    if (den == 1 && !keepRational) {
         return IntegerV(static_cast<int>(num));
     }
     return RationalV(static_cast<int>(num), static_cast<int>(den));
@@ -95,7 +97,7 @@ Value arith(const Value &a, const Value &b, ArithOp op) {
             case OP_ADD: return IntegerV(static_cast<int>(x + y));
             case OP_SUB: return IntegerV(static_cast<int>(x - y));
             case OP_MUL: return IntegerV(static_cast<int>(x * y));
-            case OP_DIV: return makeNumber(x, y);
+            case OP_DIV: return makeNumber(x, y, false);
         }
     }
     long long n1, d1, n2, d2;
@@ -131,14 +133,8 @@ bool cmpHolds(int c, CmpOp op) {
     return false;
 }
 
+// Checks adjacent pairs left to right, stopping at the first one that fails.
 Value compareChain(const std::vector<Value> &args, CmpOp op) {
-    if (args.empty()) {
-        throw RuntimeError("Wrong number of arguments for comparison");
-    }
-    long long n, d;
-    for (const auto &v : args) {
-        toFraction(v, n, d); // type check every argument
-    }
     for (size_t i = 0; i + 1 < args.size(); i++) {
         if (!cmpHolds(compareNumericValues(args[i], args[i + 1]), op)) {
             return BooleanV(false);
